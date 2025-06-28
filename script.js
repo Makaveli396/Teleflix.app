@@ -33,11 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Inicializar la App y cargar contenido ---
+    // He eliminado la antigua función `init` del lado derecho del conflicto,
+    // ya que la llamada directa a `loadContent()` es más sencilla y efectiva aquí.
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
         console.log('Telegram WebApp SDK inicializado.');
     }
-    loadContent();
+    loadContent(); // Llamada directa a loadContent
 
     // --- Event Listener para la búsqueda ---
     let searchTimeout;
@@ -108,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayCarousel(title, movies, id) {
         const carouselContainer = document.createElement('div');
         carouselContainer.className = 'mb-4';
-        
+
+        // Resolviendo el conflicto aquí: Mantengo la versión que omite películas sin póster
         let postersHTML = movies.map(movie => {
             if (!movie.poster_path) return ''; // Omitir películas sin póster
             return `<img src="${IMG_URL}${movie.poster_path}" alt="${movie.title}" class="movie-poster" onclick="showMovieDetails(${movie.id})">`;
@@ -124,9 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Funciones para clicks y fetch (dentro del scope) ---
+    // Esta función showMovieDetails y sus funciones auxiliares (fetchMovieDetails, fetchMovieCredits)
+    // deben estar DENTRO del `DOMContentLoaded` listener para que tengan acceso a `API_KEY`, `BASE_URL`, etc.
+    // y para que `modalElement` y `modalContent` estén definidos correctamente.
+    // La línea `window.showMovieDetails = showMovieDetails;` al final la hace accesible globalmente
+    // para los `onclick` en el HTML.
     async function showMovieDetails(movieId) {
-        const modalContent = document.querySelector('#movie-modal .modal-content');
-        const modalElement = new bootstrap.Modal(document.getElementById('movie-modal'));
+        // Redefinir aquí si necesitas que sean accesibles solo dentro de esta función,
+        // pero ya están definidas arriba en el scope del DOMContentLoaded.
+        // const modalContent = document.querySelector('#movie-modal .modal-content');
+        // const modalElement = new bootstrap.Modal(document.getElementById('movie-modal'));
 
         try {
             // Obtener detalles y créditos de la película
@@ -180,5 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return await response.json();
     }
 
-        window.showMovieDetails = showMovieDetails;
-    });
+    // Esto hace que `showMovieDetails` sea accesible globalmente, lo cual es necesario
+    // porque lo llamas directamente desde el atributo `onclick` en tu HTML.
+    window.showMovieDetails = showMovieDetails;
+}); // Cierra el document.addEventListener('DOMContentLoaded', ...)
